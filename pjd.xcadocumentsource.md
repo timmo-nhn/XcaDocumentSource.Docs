@@ -1,0 +1,660 @@
+# PJD.XcaDocumentSource - XCA Responding Gateway and integrated Document Registry and Repository  
+
+## Introduction
+This document will describe the Norwegian usage and profilings of the IHE integration profiles based on XDS, XCA and XUA provided in Volumes 1 through 3 of the [IHE IT Infrastructure Technical Framework ↗](https://profiles.ihe.net/ITI/TF/index.html) in a national context.
+Patient Health Records (PHR) facilitates Cross enterprise document sharing between health professionals and between health professionals and citizens in Norway. The main objectives of PHR are:
+
+* Give health professionals necessary access to referrals, discharge summaries and other types of reports(documents) stored in other healthcare enterprises to achieve more effective health care decisions and reduce errors.
+* Reduce the administrative burden and costs of today's collection and delivery of health information.
+* Increase the overview of available health information across enterprises.
+* Enable access to patients to their medical records throughout Norway.
+
+
+## Document Semantics  
+This section defines how different elements are formatted and referenced within the documentation.
+
+### External hyperlinks
+External links are suffixed by an arrow pointing up to the right ( ↗), signifying that the link leads to a website not affiliated or related to Norsk helsenett. Links will follow this format format:  `<title> - <domain> ↗`
+**Example:**  
+[External link - example.com ↗](https://www.example.com) 
+
+### XML-tags  
+Used when referencing something thats part of an XML SOAP-message  
+**Example:**   
+`<xml-tag>`
+
+
+### Normal Quotes  
+Used as an addendum for a section of text  
+**Example:**  
+>Quote
+
+### Alert Quote
+When there's something that should be paid extra attention to, or is important to know  
+**Example:**
+> **⚠️ Alert x** <br> Example text
+
+### Implementation Quotes  
+Used to describe an implementation which is notable or specific to PJD.XcaDocumentSource  
+**Example:**
+>**🔶 Implementation Note x** <br> Example text
+
+### National Extension Quote  
+Used to describe something specific to the **Norwegian** implementation of **IHE XDS/XCA**  
+**Example:**
+>**🚩 National Extension x** <br> Example text
+
+
+## Document sharing - Actors and components  
+The **XDS-architecture** consists of the following actors/components:
+
+
+### Document source  
+A document source is typically an **EHR-system** or backend solution which has produced or stores a document which will be shared using the **XDS-solution**.
+
+
+### Document consumer  
+A document consumer is typically a **EHR-system** (or citizen portal) which queries the **Document Source** for documents on a given patient.
+
+
+### Document repository
+A document repository is the service responsible for storing or making the document accessible. an **XDS-solution** can consist of one or more document repositories.
+
+
+### Document registry  
+The document registry contains information (metadata) about all archived documents in the XDS area served by this document repository. An XDS site is always served by only one document repository, but a document repository can cover multiple XDS areas.
+In addition to metadata about existing documents, the document register contains pointers to the document archive where the document is stored.
+
+
+### Affinity Domain  
+The concept of an Affinity Domain is, literally and figuratively, central in the realm of sharing health documents. The XDS-profile describes how documents are shared across enterprise boundaries within an Affinity Domain, as well as the rules that make sharing possible. An Affinity Domain has its own unique identifier, known as a **HomeCommunityID**. This ID is used when querying the domain.  
+The boundaries of an Affinity Domain is not specified, but a logical separation within a country is natural. In Norway, this separation is on a **RHF** (Regionalt helseforetak)-level. This level of separation makes it possible for the Affinity Domains to profilings catered towards the needs of both the domain, aswell as the **RHF**.
+
+
+### Patient identity source  
+This component ensures every patient is given an **unambigous identificator**, for example a local, regional or nationwide population register.
+>**🚩 National Extension**<br> In Norway, a personal identificator is in use (person number), so a dedicated service for handling patient identifications is not required.
+
+
+## Object Identifiers (OID)
+>**Note:** For OIDs to effectively work, there must be some level of governance when creating and managing OIDs. Norsk helsenett(NHN) should have a comprehensive overview of the OIDs related to PHR. NHN shall be informed of the OID of a new document source.
+
+OID (Object Identifiers) are unique identifiers for objects or things. **Anything can have an OID, and an OID is nothing more than a set of numbers and dots (.) which make up a hierarchical structure**. In PHR, OIDs are used to unambiguously identify a system or facility. The OIDs might get translated by the systems into the actual URL, which means the URL can change, but the OID stays the same. OIDs are also used in logging. OIDs have a "tree/path"-like structure, and can be represented by its numerical or text variant.  
+More about OIDs on [NHN's Developer portal ↗](https://utviklerportal.nhn.no/informasjonstjenester/pasientens-journaldokumenter-i-kjernejournal/mer-om-tjenesten/oider/) (In Norwegian).  
+
+### Governing Object Identifiers
+Even though OIDs are simply numbers and dots, its the way that its governed and controlled which defines its effectiveness in practice. Having good control over an OID structure leads to effective communication and identification.   
+
+>**🔶 Implementation Note x** <br> In **PJD.XcaDocumentSource**, OIDs are used for **RepositoryID** and **HomecommunityID**.
+
+The **Norwegian profile of IHE XDS metadata** defines the use of OIDs for identifying communities. Norsk helsenett (NHN) governs an OID-base and is the primary issuer of an OID to a community. Each Norwegian health region also governs their own OIDbase and can choose to issue their own homecommunity ID.  
+The OID-base which NDE governs has the following OID structure for document sharing:
+* 2.16.578.1.12.4.1.7 – Document sharing root OID
+  * 2.16.578.1.12.4.1.7.1 – Community base OIDs governed by NHN
+    * 2.16.578.1.12.4.1.7.1.1 – National community
+> **⚠️ Alert x:** <br> Historically, this OID-base has belonged to The Norwegian Directorate of eHealth (NDE/e-Helse) for PHR (formely known as Dokumentdeling)
+
+
+## SOAP-Message and SOAP-message formats  
+An **XML SOAP-message** (also known as **SOAP-envelope**) is defined by an enclosing `<Envelope>`-tag and a `<Header>` and `<Body>` tag. The Header holds information about the request in the Body, such as the Action performed.
+**SOAP-messages** are commonly transmitted over **HTTPS** as a `POST`-request, with the **SOAP message** as the request payload.
+
+### Sample SOAP-message
+```xml
+<Envelope>
+    <Header>
+        <Action>urn:ihe:iti:2007:RegistryStoredQuery</Action>
+        <MessageId>12345678-abcd-efab-cdef-123456789abc</MessageId>
+        <Security>
+            [SAML-token]
+        </Security>
+    </Header>  
+    <Body>
+        <!-- Content in body is expected to adhere with <Action> -->
+        <AdhocQueryRequest>
+            [Request]
+        </AdhocQueryRequest>
+    </Body>
+```
+*Example SOAP-envelope. Namespaces are omitted for clarity*
+
+There is excpected to be a **1:1 relationship** between the **SOAP action** (`<Action>`-field in the **SOAP-header**) and the content in the request body
+
+### Terminology in Document sharing
+| Term  | Definition | Example |
+|---|---|---|
+| Assigning Authority | Used in conjunction with metadata. Consists of an unique identifier for the organization or system responsible for governing or producing said data. Also used for defining the format of the data. | `13116900216^^^&amp;2.16.578.1.12.4.1.4.1&amp;ISO` <br> *Here the **OID** is the **assigning authority** for defining what the numbers `13116900216` represent (Birth-number^^^OID defining birth numbers)*  |
+| Code System | A Code System defines a set of coded values that can be used in XDS metadata, such as document types, healthcare facility types, and event codes  | `codeSystem="urn:oid:2.16.578.1.12.4.1.1.9060"` |
+| Code System Name | The name of a specific code system | `codeSystemName="Kategori helsepersonell"` |
+| OID | Object Identifier - Used to identify a single organization or system | `2.16.578.1.12.4.1.` |
+| TBD |  | `TBD` |
+
+*Table x: terminology used for types in IHE XDS*  
+
+## Types in IHE XDS  
+There are different types used to contain and structure various pieces when storing and making documents available. It's imperative that the reader familiarizes themself with each type and where they usually reside in a **SOAP-message**.3
+
+
+[More on OIDs used nationally ↗](https://www.helsedirektoratet.no/digitalisering-og-e-helse/e-helsestandarder-og-standardiseringstiltak/oid-identifikatorserier-i-helse-og-omsorgstjenesten)
+
+### Document Sharing object correspondence  
+Some of the **XML Types** described below can be used to represent different concepts.  
+The table below describes the different types.
+| Document Sharing Object/Association  | XML Type representation |
+|---|---|
+| DocumentEntry	 | `<ExtrinsicObject>` |
+| SubmissionSet | `<RegistryPackage>` |
+| Folder | `<RegistryPackage>` |
+| HasMember | `<Association>` |
+| MemberOf | `<Association>` |
+| Relationship | `<Association>` |
+
+*Table x: Document Sharing concept correspondence with XML Types*
+
+
+### HL7 Data types  
+**All data types are represented as a string literal and are contained within other types**. Some might contain special characters, denoting a structure.  
+The most commonly used data structure in document sharing in Norway are **HL7 data types**.  
+Several data types are used in document sharing in Norway, below are some examples on notable ones.
+> For an overview on **HL7**, see  [Introduction to HL7 Standards - hl7.org ↗](https://www.hl7.org/implement/standards/index.cfm?ref=nav)  
+> For an overview on **datatypes in HL7**, see [terminology.hl7.org ↗](https://terminology.hl7.org/5.1.0/CodeSystem-v2-0440.html)
+
+#### HL7 separators  
+
+HL7 covers a wide span of topics. However, **the part of the HL7 standard relevant in this document is the terminology and data types aspect**.  
+To better understand the structure of the following XML message examples, an explanation of the separator symbols are warranted. The table below describes the most common separators and their purpose, in a hierarchical manner, meaning the separator below is usually nested within the preceding separator. A data type can contain other data types as part of its structure.
+
+Separator | Symbol | Usage |
+|---|---|---|
+Field Separator | `\|` | Separate different HL7 types from one another |
+Component separator | `^` | Separates one component of a HL7 type from another |
+Subcomponent separator | `&` | Separates subcomponents within Component separators |
+
+*Table x: Common separators in HL7 datatypes*
+
+```
+TYPE
+    [|] Field 
+        [^] Component
+            [&] Subcomponent
+```
+*Hierarchical structure of HL7 datatypes*
+
+#### Example HL7 Type  
+Take this example of a **PID-type**:
+```
+PID|||ST-1000^^^&1.3.6.1.4.1.21367.2003.3.9&ISO||Doe^John^^^||19560527|M|||100 Main St^^Metropolis^Il^44130^USA
+```
+*Example HL7-snippet for PID-type*
+
+The **PID-type** is used to describe a patient. This can be represented as a long string of characters, begining with the `PID`, signifying that this is a `PID` data type. The separators `|` separate each field.
+A more structured formatting can be applied, making it look like this:
+```
+PID
+    PID.1  |                                        
+    PID.2  |                                         
+    PID.3  |ST-1000^^^&1.3.6.1.4.1.21367.2003.3.9&ISO
+    PID.4  |                                         
+    PID.5  |Doe^John^^^                              
+    PID.6  |                                         
+    PID.7  |19560527                                 
+    PID.8  |M                                        
+    PID.9  |                                         
+    PID.10 |                                         
+    PID.11 |100 Main St^^Metropolis^Il^44130^USA     
+```
+
+*Example HL7 snippet for PID-type(Formatted)*
+
+When representing a type in **XML**, each `PID`-parts is represented as its own value in an array of strings. Each part is separated into its own `<Value>`-tag
+```xml
+<Slot name="sourcePatientInfo">
+    <ValueList>
+        <Value>PID-3|ST-1000^^^&amp;1.3.6.1.4.1.21367.2003.3.9&amp;ISO</Value>
+        <Value>PID-5|Doe^John^^^</Value>
+        <Value>PID-7|19560527</Value>
+        <Value>PID-8|M</Value>
+        <Value>PID-11|100 Main St^^Metropolis^Il^44130^USA</Value>
+    </ValueList>
+</Slot>
+```
+*Example HL7 snippet for PID-type in XML*
+
+
+#### XCN - Extended Composite ID Number and Name for Persons  
+**XCN** is used to identify a person which also has an **ID number** with an **assigning authority** associated with them. 
+> **Assigning authority** refers to the organization or system responsible for producing or governing the data for the current element.
+
+```xml
+<Value>123456789^NORDMANN^OLA^^^^^^&amp;2.16.578.1.12.4.1.4.4&amp;ISO</Value>
+```
+*Example of **XCN datatype** wrapped in XML, hence the `&amp;` escape character*
+
+Below is an explanation of each field in the **HL7 XCN** data type
+| Field | Type | Value |
+|---|---|---|
+| XCN.1 - Id Number | ST | `123456789` |
+| XCN.2 - Family Name| FN | `NORDMANN` |
+| XCN.3 - Given Name| ST | `OLA` |
+| XCN.4 - Second And Further Given Names Or Initials Thereof | ST | |
+| XCN.5 - Suffix | ST | |
+| XCN.6 - Prefix | ST | |
+| XCN.7 - Degree | IS | |
+| XCN.8 - Source Table | IS | |
+| XCN.9 - Assigning Authority | HD | `&amp;2.16.578.1.12.4.1.4.4&amp;ISO` |
+
+*Table x: Explanation of **HL7 XCN** data type*
+
+More on XCN datatype: [HL7 v2.6 - XCN - hl7-definition.caristix.com ↗](https://hl7-definition.caristix.com/v2/HL7v2.6/DataTypes/XCN)
+
+
+See [4.2.3.1.7 Metadata Attribute Data types - profiles.ihe.net ↗](https://profiles.ihe.net/ITI/TF/Volume3/ch-4.2.html#4.2.3.1.7) for more information.
+
+
+### ExtrinsicObjectType (`<ExtrinsicObject>`)  
+`<ExtrinsicObject>` (or `DocumentEntry`) describes **metadata** for a given document such as who created the document and what type of document it is, aswell as the identifier used to retrieve the document. This metadata is usually what is displayed in an PHR-system or similar.
+
+| Property  | Description |
+|---|---|
+| **Name** | ExtrinsicObject |
+| **Can be found** | **Document Registry**, `<AdhocQueryResponse>` |
+| **Usage** | Reference to an uploaded document |
+| **Class Name** | `XcaXds.Commons.Models.Soap.XdsTypes.ExtrinsicObjectType` |
+
+*Table x: Description of `<ExtrinsicObject>`*
+
+
+#### Example  
+```xml
+<ExtrinsicObject 
+    id="ExtrinsicObject01" 
+    home="2.16.578.1.12.4.5.100.1" 
+    objectType="urn:uuid:7edca82f-054d-47f2-a032-9b2a5b5186c1" 
+    status="urn:oasis:names:tc:ebxml-regrep:StatusType:Approved" 
+    mimeType="application/xml" 
+    xmlns="urn:oasis:names:tc:ebxml-regrep:xsd:rim:3.0">
+    <Slot name="creationTime">
+        <ValueList>
+            <Value>20250206141356</Value>
+        </ValueList>
+    </Slot>
+    [........]
+</ExtrinsicObject>
+```
+*Example of ExtrinsicObject with `**Stable** objectType and a single **creationTime** Slot*
+
+
+### RegistryPackageType (`<RegistryPackage>`)  
+`<RegistryPackage>` can be used to describe a **Submission set**, which describes the user or authoring institution which is uploading the document. This information can differ from the `<ExtrinsicObject>`, as the author and the uploader may be different people or institutions.  
+
+| Property  | Description |
+|---|---|
+| **Name** | ExtrinsicObject |
+| **Can be found** | Document Registry, AdhocQuery Response |
+| **Usage** | Reference to the organization/person who uploaded the document<br>A **Folder** which references other XDS Types |
+| **Class Name** | RegistryPackageType |
+
+*Table x: Description of ExtrinsicObject*
+
+
+```xml
+<RegistryPackage 
+    id="RegistryPackage01" 
+    objectType="urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:RegistryPackage" 
+    xmlns="urn:oasis:names:tc:ebxml-regrep:xsd:rim:3.0">
+    <!-- Classified as a Submission set-->
+    <Classification 
+        id="d6ca200c-9583-4a95-b7dc-156061b45f4b" 
+        objectType="urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:ExternalIdentifier" 
+        classifiedObject="RegistryPackage01" 
+        classificationNode="urn:uuid:a54d6aa5-d40d-43f9-88c5-b4633d873bdd" />
+    <Slot name="submissionTime">
+        <ValueList>
+            <Value>20250206141356</Value>
+        </ValueList>
+    </Slot>
+    [........]
+</RegistryPackage>
+```
+
+*Example of ExtrinsicObject with Stable objectType and submisisonTime slot*
+```c#
+[RegistryPackageType]
+    [ClassificationType]    [0..*]
+        [SlotType]          [0..*]
+    [SlotType]              [0..*]
+    [Name]                  [0..1]
+        [LocalizedString]   [0..*]
+```
+*Cardinality of RegistryPackage*
+
+
+### AssociationType (`<Association>`)  
+An `<Association>` is used to bind two or more **types** together in order to create a logical connection between them. This is done using attributes `sourceObject` and `targetObject`. An `<Association>` can have multiple states based on its `associationType`
+
+| Property  | Description |
+|---|---|
+| **Name** | Association |
+| **Can be found** | Document Registry, AdhocQuery Response |
+| **Usage** | Associate different types with one another |
+| **Class Name** | RegistryPackageType |
+
+*Table x: Description of Association*
+
+
+```xml
+<Association 
+    id="Association01" 
+    objectType="urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:Association" 
+    associationType="urn:oasis:names:tc:ebxml-regrep:AssociationType:HasMember" 
+    sourceObject="RegistryPackage01" 
+    targetObject="ExtrinsicObject01" 
+    xmlns="urn:oasis:names:tc:ebxml-regrep:xsd:rim:3.0">
+    <Slot name="SubmissionSetStatus">
+        <ValueList>
+            <Value>Original</Value>
+        </ValueList>
+    </Slot>
+</Association>
+```
+*Example of Association binding a RegistryPackage to an ExtrinsicObject*
+
+```c#
+[AssociationType]
+    [Slot]          [0..1]
+```
+*Cardinality of Classification*
+
+See [4.2.2 Association Types - profiles.ihe.net ↗](https://profiles.ihe.net/ITI/TF/Volume3/ch-4.2.html#4.2.2) for more information.
+
+### ClassificationType (`<Classification>`)  
+`<Classification>` is a container for information which is usually used to classify and group information. Classifications follow a ClassificationScheme (`classificationScheme`) which defines what the classification is classifying. `<Classification>`s are usually nesten in other types, such as `<ExtrinsicObject>` and `<RegistryPackage>`.  
+
+| Property  | Description |
+|---|---|
+| **Name** | Classification |
+| **Can be found** | Document Registry, ExtrinsicObject, RegistryObjectList |
+| **Usage** | Group a set of information entries (eg. multiple `<Slot>`s relating to a document author)  |
+| **Class Name** | ClassificationType |
+
+*Table x: Description of `<Classification>`*
+
+
+#### Example  
+```xml
+<Classification 
+    objectType="urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:Classification" 
+    classificationScheme="urn:uuid:f0306f51-975f-434e-a61c-c59651d33983" 
+    classifiedObject="RegistryPackage01" 
+    nodeRepresentation="A03-2">
+    <Slot name="codingScheme">
+    <ValueList>
+        <Value>2.16.578.1.12.4.1.1.9602</Value>
+    </ValueList>
+    </Slot>
+</Classification>
+```
+*Example of Classification following the classificationScheme for XDSSubmissionset.typeCode, classifying the type of document. The value contains the OID for the codeSystem*
+
+```c#
+[ClassificationType]
+    [SlotType]              [0..*]
+        [ValueListType]     [1..1]
+            [Value]         [0..*]
+    [Name]                  [0..1]
+        [LocalizedString]   [0..*]
+```
+*Cardinality of Classification*
+
+
+#### ClassificationSchemes
+| ClassificationScheme  | UUID |
+|---|---|
+| XDSDocumentEntry.healthcareFacilityTypeCode | urn:uuid:f33fb8ac-18af-42cc-ae0e-ed0b0bdb91e1 |
+| XDSDocumentEntry.classCode | urn:uuid:41a5887f-8865-4c09-adf7-e362475b143a |
+| XDSDocumentEntry.formatCode | urn:uuid:a09d5840-386c-46f2-b5ad-9c3699a4309d |
+| XDSDocumentEntry.practiceSettingCode | urn:uuid:cccf5598-8b07-4b77-a05e-ae952c785ead |
+| XDSDocumentEntry.typeCode | urn:uuid:f0306f51-975f-434e-a61c-c59651d33983 |
+| XDSDocumentEntry.uniqueId | urn:uuid:2e82c1f6-a085-4c72-9da3-8640a32e42ab |
+| XDSDocumentEntry.patientId | urn:uuid:58a6f841-87b3-4a3e-92fd-a8ffeff98427 |
+| XDSDocumentEntry.contentTypeCode | urn:uuid:aa543740-bdda-424e-8c96-df4873be8500 |
+| XDSSubmissionSet.author | urn:uuid:a7058bb9-b4e4-4307-ba5b-e3f0ab85e12d |
+
+*Table x: Valid ClassificationSchemes for a `<Classification>`*
+
+
+### ExternalIdentifierType (`<ExternalIdentifier>`)  
+
+Externalidentifiers are identifiers which exist outside the boundaries of the submitted SOAP-XML. These identifiers, such as patient IDs or document unique IDs are considered to be real-world identifiers that have global meaning external to the document Registry or other transaction.
+
+| Property  | Description |
+|---|---|
+| **Name** | ExternalIdentifier |
+| **Can be found** | `<ExtrinsicObject>`, `<RegistryPackage>` |
+| **Usage** | Group a set of information entries (eg. multiple `<Slot>`s relating to a document author)  |
+| **Class Name** | ClassificationType |
+
+*Table x: Description of ExternalIdentifier*
+
+```xml
+<ExternalIdentifier 
+    id="df0a5ea1-d5ae-4a26-b1f0-abc0e33ff04a" 
+    objectType="urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:ExternalIdentifier" 
+    registryObject="ExtrinsicObject01" 
+    identificationScheme="urn:uuid:58a6f841-87b3-4a3e-92fd-a8ffeff98427" 
+    value="13116900216^^^^^^^^&amp;2.16.578.1.12.4.1.7.3.2.1&amp;ISO">
+    <Name>
+        <LocalizedString value="XDSDocumentEntry.patientId" />
+    </Name>
+</ExternalIdentifier>
+```
+*Example of ExternalIdentifier for patient Id*
+
+```c#
+[ClassificationType]
+    [SlotType]              [0..*]
+        [ValueListType]     [1..1]
+            [Value]         [0..*]
+    [Name]                  [0..1]
+        [LocalizedString]   [0..*]
+```
+*Cardinality of Classification*
+
+
+
+### SlotType  (`<Slot>`)  
+`<Slot>` is a generic subtype container for information. It's usually nesten in other types, such as `<Classification>`, `<ExternalIdentifier>` or directly in types such as `<ExtrinsicObject>` and `<RegistryPackage>`. 
+
+| Property  | Description |
+|---|---|
+| **Name** | Slot |
+| **Can be found** | `<ExtrinsicObject>`, `<RegistryObjectList>` |
+| **Usage** | Generic container of information |
+| **Class Name** | SlotType |
+
+*Table x: Description of Slot*
+
+
+#### Example  
+```xml
+<Slot name="authorPerson">
+    <ValueList>
+        <Value>565505933^GREVLING^KVART^^^^^^&amp;2.16.578.1.12.4.1.4.4&amp;ISO</Value>
+        <Value>123456789^NORDMANN^OLA^^^^^^&amp;2.16.578.1.12.4.1.4.4&amp;ISO</Value>
+    </ValueList>
+</Slot>
+```
+*Example of Slot*
+
+```c#
+[SlotType]
+    [ValueListType] [1..1]
+            [Value] [0..*]
+```
+*Cardinality of SlotType*
+
+
+## Stable vs. On-Demand Documents  
+>**🚩 National Extension**<br> **PJD.XcaDocumentSource** aswell as all document sources in Norway only support **Stable**-documents. This is described for informative purposes.  
+The usage of On-demand Documents in document sharing in Norway is not supported.
+
+* **Stable Document** Entries represent documents which are unchanged over time. **Stable is the default value.**  
+* **On-Demand Document** are documents which can change over time, and are dynamic in a sense. Used only by Document Consumers  which support the On-Demand Documents option.  
+  
+The document is classified in the Registry as an attribute in an `<ExtrinsicObject>`
+
+| Property  | Description |
+|---|---|
+| **Stable** | urn:uuid:7edca82f-054d-47f2-a032-9b2a5b5186c1 |
+| **On-Demand** | urn:uuid:34268e47-fdf5-41a6-ba33-82133c465248 |
+
+*Table x: ExtrinsicObject objectType for Stable or On-Demand Document*
+
+
+## Transactions In IHE XDS  
+Below are the transactions supported by default by **PJD.XcaDocumentSource**. Each transaction section contains a table defining the properties of the transaction.  
+
+**Example table:**  
+| Property  | Description |
+|---|---|
+| HTTP action | POST |
+| Endpoint    | Relative path. (eg. `/Registry/Services/RegistryService`) |
+| SOAP request | Item in the request `<Body>`. (eg. `<AdhocQueryRequest>`) |
+| SOAP request action | Item in `<Action>` in `<Header>`. (eg. urn:ihe:iti:2007:RegistryStoredQuery) |
+| SOAP response | Item in the Response `<Body>`. (eg. `<AdhocQueryResponse>`) |
+| SOAP response action | Item in `<Action>` in `<Header>`. (eg. urn:ihe:iti:2007:RegistryStoredQueryResponse) |
+*Table x: Example of table structure for describing a transaction*
+
+### Registry Stored Query ITI-18  
+This transaction is used in a dialogue between the Document Requester and the Document Registry to query documents with specific properties.  
+A request with specific search parameters is sent from a Document Requester to the Document Registry, which sends back a list of documents that satisfy the search parameters.
+
+| Property  | Description |
+|---|---|
+| HTTP action | POST |
+| Short description | Get list of metadata for patient or resource |
+| Endpoint    | /Registry/Services/RegistryService |
+| SOAP request | `<AdhocQueryRequest>` |
+| SOAP request action | urn:ihe:iti:2007:RegistryStoredQuery |
+| SOAP response | `<AdhocQueryResponse>`          |
+| SOAP response action | urn:ihe:iti:2007:RegistryStoredQueryResponse |
+
+*Table x: ITI-18 request*
+
+#### AdhocQuery Request types  
+An `<AdhocQuery>` request is versatile in the sense that it can query for different types of items in the Document Registry. 
+The example below shows an `<AdhocQueryRequest>` with id `urn:uuid:14d4debf-8f97-4251-9a74-a90016b0af0d` (`FindDocuments`). Each type of `<AdhocQuery>` has different requirements and optionalities for the slots used in the search.
+> **⚠️ AND/OR semantics** <br> An `<AdhocQueryRequest>` contains `<Slot>`s to specify which parameters/metadata to search for. Each `<Slot>` in the `<AdhocQueryRequest>` works as a **AND-clause**. However, for some slots, the `<Value>` elements in the `<ValueList>` works as an **OR-clause**  
+
+
+```xml
+<AdhocQueryRequest xmlns="urn:oasis:names:tc:ebxml-regrep:xsd:query:3.0">
+    <ResponseOption returnType="LeafClass" returnComposedObjects="true" />
+    <AdhocQuery id="urn:uuid:14d4debf-8f97-4251-9a74-a90016b0af0d"
+        xmlns="urn:oasis:names:tc:ebxml-regrep:xsd:rim:3.0">
+        <Slot name="$XDSDocumentEntryPatientId">
+            <ValueList>
+                <Value>'13116900216^^^&amp;2.16.578.1.12.4.1.4.1&amp;ISO'</Value>
+            </ValueList>
+        </Slot>
+        <!-- AND -->
+        <Slot name="$XDSDocumentEntryStatus">
+            <ValueList>
+                <Value>('urn:oasis:names:tc:ebxml-regrep:StatusType:Approved')</Value>
+                <!-- OR -->
+                <Value>('urn:oasis:names:tc:ebxml-regrep:StatusType:CustomStatus01')</Value>
+            </ValueList>
+        </Slot>
+
+    </AdhocQuery>
+</AdhocQueryRequest>
+```
+*AdhocQueryRequest with FindDocuments stored query with a slot for patientId And Status*
+
+```c#
+[AdhocQueryRequest]
+    [ResponseOption]    [1..1]
+    [AdhocQuery]        [1..1]
+        [SlotType]      [1..*]
+```
+*Cardinality of AdhocQueryRequest*
+
+> **🔶 Implementation Note x:** <br> While there are many StoredQueries, **PJD.XcaDocumentSource only supports the ones in the table below**, out of the box  
+ 
+| StoredQuery | Guid |
+|---|---|
+| FindDocuments | urn:uuid:14d4debf-8f97-4251-9a74-a90016b0af0d |
+| GetAll | urn:uuid:10b545ea-725c-446d-9b95-8aeb444eddf3 |
+| GetFolders | urn:uuid:5737b14c-8a1a-4539-b659-e03a34a5e1e4 |
+| GetAssociations | urn:uuid:a7ae438b-4bc2-4642-93e9-be891f7bb155 |
+| FindSubmissionSets | urn:uuid:f26abbcb-ac74-4422-8a30-edb644bbc1a9 |
+
+*Table x: Possible Stored Queries in PJD.XcaDocumentSource*
+
+
+#### AdhocQuery Response  
+In `FindDocuments` stored queries, a **Document Consumer** can choose between two response types:  
+1.	`ObjectRef`: Returns only the documents' unique identificators (UUID) 
+2.	`LeafClass`: Returns all metadata the system  can return.  
+
+>**🔶 Implementation Note x:** <br> If neither `ObjectRef` or `LeafClass` is specified (such as if `<ResponseOption>` is missing), an **empty `<AdhocQueryResponse>`** is returned
+
+More on [ITI-18 - profiles.ihe.net ↗](https://profiles.ihe.net/ITI/TF/Volume2/ITI-18.html)  
+See [3.18.4.1.2.3.7 Parameters for Required Queries - profiles.ihe.net ↗](https://profiles.ihe.net/ITI/TF/Volume2/ITI-18.html#3.18.4.1.2.3.7) for more information on query parameters aswell as AND/OR semantics
+
+
+### Retrieve Document Set ITI-43
+ITI-43 is used by Document Consumer to retrieve one or a set of documents from Document Repository.  
+The Document Consumer must use the following attributes received from Document Registry via ITI-18 Registry Stored Query:  
+1. DocumentEntry ID: `documentUniqueId`
+2. Document Repository ID: `repositoryUniqueId` 
+3. Affinity Domain ID: `homeCommunityID` 
+
+
+| Property  | Description |
+|---|---|
+| HTTP action | POST |
+| Short description | Get a single document |
+| Endpoint    | /Repository/Services/RepositoryService |
+| SOAP request | `<RetrieveDocumentSetRequest>` |
+| SOAP request action | urn:ihe:iti:2007:RegistryStoredQuery |
+| SOAP response | `<RetrieveDocumentSetResponse>`          |
+| SOAP response action | urn:ihe:iti:2007:RegistryStoredQueryResponse |
+
+*Table x: ITI-18 request*
+
+```xml
+<ns2:RetrieveDocumentSetRequest
+    xmlns:ns2="urn:ihe:iti:xds-b:2007">
+    <ns2:DocumentRequest>
+        <ns2:HomeCommunityId>2.16.578.1.12.4.5.100.1</ns2:HomeCommunityId>
+        <ns2:RepositoryUniqueId>2.16.578.1.12.4.5.100.1.2</ns2:RepositoryUniqueId>
+        <ns2:DocumentUniqueId>105085430</ns2:DocumentUniqueId>
+    </ns2:DocumentRequest>
+</ns2:RetrieveDocumentSetRequest>
+```
+*RetrieveDocumentSetRequest request for document with Id 105085430 (^ is used as a field separator)*
+
+
+## Code stuff
+#### Code example - by `ObjectRef` or `LeafClass`
+The simplest way to return only identifiers is to create a new list of ObjectRefTypes instead of 
+```c#
+switch (adhocQueryRequest.ResponseOption.ReturnType)
+{
+    case ResponseOptionTypeReturnType.ObjectRef:
+        // Only return the unique identifiers
+        var objectRefs = registryFindDocumentEntriesResult
+            .Select(eo => new ObjectRefType() { Id = eo.Id })
+            .ToList();
+        filteredElements = [.. objectRefs];
+        break;
+    case ResponseOptionTypeReturnType.LeafClass:
+        filteredElements = [.. registryFindDocumentEntriesResult];
+        break;
+
+    default:
+        break;
+}
+```
+*Code-example on implementation of `<ResponseOption>`*  

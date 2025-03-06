@@ -14,7 +14,7 @@ Patient Health Records (PHR) facilitates Cross enterprise document sharing betwe
 This section defines how different elements are formatted and referenced within the documentation.
 
 ### External hyperlinks
-External links are suffixed by an arrow pointing up to the right ( ↗), signifying that the link leads to a website not affiliated or related to Norsk helsenett. Links will follow this format format:  `<title> - <domain> ↗`
+External links are suffixed by an arrow pointing up to the right ( ↗), signifying that the link leads to a website not affiliated or related to Norsk helsenett. Links will follow this format:  `<title> - <domain> ↗`
 **Example:**  
 [External link - example.com ↗](https://www.example.com) 
 

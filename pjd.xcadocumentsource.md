@@ -2,7 +2,7 @@
 
 ## Introduction
 This document will describe the Norwegian usage and profilings of the IHE integration profiles based on XDS, XCA and XUA provided in Volumes 1 through 3 of the [IHE IT Infrastructure Technical Framework ↗](https://profiles.ihe.net/ITI/TF/index.html) in a national context.
-Patient Health Records (PHR) facilitates Cross enterprise document sharing between health professionals and between health professionals and citizens in Norway. The main objectives of PHR are:
+Patient Health Records (PHR) facilitates Cross enterprise document sharing between health professionals and between health professionals and citizens in Norway. The main objectives of PHR are:  
 
 * Give health professionals necessary access to referrals, discharge summaries and other types of reports(documents) stored in other healthcare enterprises to achieve more effective health care decisions and reduce errors.
 * Reduce the administrative burden and costs of today's collection and delivery of health information.

@@ -373,7 +373,7 @@ See [4.2.2 Association Types - profiles.ihe.net ↗](https://profiles.ihe.net/IT
 | Property  | Description |
 |---|---|
 | **Name** | Classification |
-| **Can be found** | Document Registry, ExtrinsicObject, RegistryObjectList |
+| **Can be found** | Document Registry, ExtrinsicObject, AdhocQuery Response |
 | **Usage** | Group a set of information entries (eg. multiple `<Slot>`s relating to a document author)  |
 | **Class Name** | ClassificationType |
 
@@ -430,7 +430,7 @@ Externalidentifiers are identifiers which exist outside the boundaries of the su
 | Property  | Description |
 |---|---|
 | **Name** | ExternalIdentifier |
-| **Can be found** | `<ExtrinsicObject>`, `<RegistryPackage>` |
+| **Can be found** | ExtrinsicObject, RegistryPackage, AdhocQuery Response |
 | **Usage** | Group a set of information entries (eg. multiple `<Slot>`s relating to a document author)  |
 | **Class Name** | ClassificationType |
 
@@ -468,7 +468,7 @@ Externalidentifiers are identifiers which exist outside the boundaries of the su
 | Property  | Description |
 |---|---|
 | **Name** | Slot |
-| **Can be found** | `<ExtrinsicObject>`, `<RegistryObjectList>` |
+| **Can be found** | ExtrinsicObject, RegistryObjectList, AdhocQuery Request/Response |
 | **Usage** | Generic container of information |
 | **Class Name** | SlotType |
 
@@ -484,7 +484,7 @@ Externalidentifiers are identifiers which exist outside the boundaries of the su
     </ValueList>
 </Slot>
 ```
-*Example of Slot*
+*Example of Slot with two values(HL7 XCN) in valuelist*
 
 ```c#
 [SlotType]
@@ -622,6 +622,8 @@ The Document Consumer must use the following attributes received from Document R
 | SOAP response action | urn:ihe:iti:2007:RegistryStoredQueryResponse |
 
 *Table x: ITI-18 request*
+
+>**🚩 National Extension**<br> [IHE ITI-TF Vol.3 4.2.3.2.26 - profiles.ihe.net ↗](https://profiles.ihe.net/ITI/TF/Volume3/ch-4.2.html#4.2.3.2.26) specifies constraints for a document unique ID. **PJD.XcaDocumentSource, aswell as other document sources in norway, does not enforce these constraints by default** - this falls onto the producing application
 
 ```xml
 <ns2:RetrieveDocumentSetRequest

@@ -35,7 +35,7 @@ When there's something that should be paid extra attention to, or is important t
 > **⚠️ Alert x** <br> Example text
 
 ### Implementation Quotes  
-Used to describe an implementation which is notable or specific to PJD.XcaDocumentSource  
+Used to describe an implementation which is notable or specific to **PJD.XcaDocumentSource**  
 **Example:**
 >**🔶 Implementation Note x** <br> Example text
 
@@ -139,7 +139,8 @@ There are different types used to contain and structure various pieces when stor
 
 ### Document Sharing object correspondence  
 Some of the **XML Types** described below can be used to represent different concepts.  
-The table below describes the different types.
+The table below describes the different types.  
+
 | Document Sharing Object/Association  | XML Type representation |
 |---|---|
 | DocumentEntry	 | `<ExtrinsicObject>` |
@@ -191,17 +192,17 @@ The **PID-type** is used to describe a patient. This can be represented as a lon
 A more structured formatting can be applied, making it look like this:
 ```
 PID
-    PID.1  |                                        
-    PID.2  |                                         
+    PID.1  |
+    PID.2  |
     PID.3  |ST-1000^^^&1.3.6.1.4.1.21367.2003.3.9&ISO
-    PID.4  |                                         
-    PID.5  |Doe^John^^^                              
-    PID.6  |                                         
-    PID.7  |19560527                                 
-    PID.8  |M                                        
-    PID.9  |                                         
-    PID.10 |                                         
-    PID.11 |100 Main St^^Metropolis^Il^44130^USA     
+    PID.4  |
+    PID.5  |Doe^John^^^
+    PID.6  |
+    PID.7  |19560527
+    PID.8  |M
+    PID.9  |
+    PID.10 |
+    PID.11 |100 Main St^^Metropolis^Il^44130^USA
 ```
 
 *Example HL7 snippet for PID-type(Formatted)*
@@ -604,11 +605,14 @@ See [3.18.4.1.2.3.7 Parameters for Required Queries - profiles.ihe.net ↗](http
 
 
 ### Retrieve Document Set ITI-43
-ITI-43 is used by Document Consumer to retrieve one or a set of documents from Document Repository.  
-The Document Consumer must use the following attributes received from Document Registry via ITI-18 Registry Stored Query:  
-1. DocumentEntry ID: `documentUniqueId`
-2. Document Repository ID: `repositoryUniqueId` 
-3. Affinity Domain ID: `homeCommunityID` 
+ITI-43 is used by Document Consumer to retrieve one or more documents from Document Repository.  
+The Document Consumer must use the following attributes received from `<AdhocQueryResponse>` via **ITI-18 Registry Stored Query**:  
+
+| Field  | Name | Aquisition |
+|---|---|---|
+| Affinity Domain ID | `homeCommunityID` | `ExtrinsicObject` attribute `home`<br> `<ExtrinsicObject id="eo01" home="2.16.578.1.12.4.5.100.1"` |
+| DocumentEntry ID | `documentUniqueId` | `ExtrinsicObject` attribute `id`<br> `<ExtrinsicObject id="eo01"` |
+| Document Repository ID | `repositoryUniqueId` | `ExtrinsicObject` slot `repositoryUniqueId`<br> ```<Slot name="repositoryUniqueId">[...]<Value>2.16.578.1.12.4.5.100.1.2</Value>[...]</Slot>``` |
 
 
 | Property  | Description |
@@ -635,8 +639,31 @@ The Document Consumer must use the following attributes received from Document R
     </ns2:DocumentRequest>
 </ns2:RetrieveDocumentSetRequest>
 ```
-*RetrieveDocumentSetRequest request for document with Id 105085430 (^ is used as a field separator)*
+*RetrieveDocumentSetRequest request for document with Id 105085430*
 
+```c#
+[RetrieveDocumentSetRequest]
+    [DocumentRequest]           [1..*]
+        [HomeCommunityId]       [1..1]
+        [RepositoryUniqueId]    [1..1]
+        [DocumentUniqueId]      [1..1]
+```
+*Cardinality of RetrieveDocumentSetRequest*
+
+
+### Cross Gateway Query ITI-38 
+Cross Gateway Query is essentially Exactly the same as an ITI-18 AdhocQuery request, apart from the `<Action>`-field in the `<Header>` of the **SOAP-request**.
+In practice, The ITI-38 request originates from the NHN XCA gateway, and is used when querying documents across **Affinity domains**.
+
+| Property  | Description |
+|---|---|
+| HTTP action | POST |
+| Short description | Get list of metadata for patient or resource |
+| Endpoint    | /XCA/Services/RespondingGatewayService |
+| SOAP request | `<AdhocQueryRequest>` |
+| SOAP request action | urn:ihe:iti:2007:CrossGatewayQuery |
+| SOAP response | `<AdhocQueryResponse>`          |
+| SOAP response action | urn:ihe:iti:2007:CrossGatewayQueryResponse |
 
 ## Code stuff
 #### Code example - by `ObjectRef` or `LeafClass`
@@ -660,3 +687,4 @@ switch (adhocQueryRequest.ResponseOption.ReturnType)
 }
 ```
 *Code-example on implementation of `<ResponseOption>`*  
+r

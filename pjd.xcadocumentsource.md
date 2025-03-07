@@ -4,7 +4,7 @@
 This document will describe the Norwegian usage and profilings of the IHE integration profiles based on XDS, XCA and XUA provided in Volumes 1 through 3 of the [IHE IT Infrastructure Technical Framework ↗](https://profiles.ihe.net/ITI/TF/index.html) in a national context.
 Patient Health Records (PHR) facilitates Cross enterprise document sharing between health professionals and between health professionals and citizens in Norway. The main objectives of PHR are:  
 
-* Give health professionals necessary access to referrals, discharge summaries and other types of reports(documents) stored in other healthcare enterprises to achieve more effective health care decisions and reduce errors.
+* Give health professionals necessary access to referrals, discharge summaries and other types of reports (documents) stored in other healthcare enterprises to achieve more effective health care decisions and reduce errors.
 * Reduce the administrative burden and costs of today's collection and delivery of health information.
 * Increase the overview of available health information across enterprises.
 * Enable access to patients to their medical records throughout Norway.
@@ -61,8 +61,8 @@ A document consumer is typically a **EHR-system** (or citizen portal) which quer
 A document repository is the service responsible for storing or making the document accessible. an **XDS-solution** can consist of one or more document repositories.
 
 
-### Document registry  
-The document registry contains information (metadata) about all archived documents in the XDS area served by this document repository. An XDS site is always served by only one document repository, but a document repository can cover multiple XDS areas.
+### Document Registry  
+The Document Registry contains information (metadata) about all archived documents in the XDS area served by this document repository. An XDS site is always served by only one document repository, but a document repository can cover multiple XDS areas.
 In addition to metadata about existing documents, the document register contains pointers to the document archive where the document is stored.
 
 
@@ -77,7 +77,7 @@ This component ensures every patient is given an **unambigous identificator**, f
 
 
 ## Object Identifiers (OID)
->**Note:** For OIDs to effectively work, there must be some level of governance when creating and managing OIDs. Norsk helsenett(NHN) should have a comprehensive overview of the OIDs related to PHR. NHN shall be informed of the OID of a new document source.
+>**Note:** For OIDs to effectively work, there must be some level of governance when creating and managing OIDs. Norsk helsenett (NHN) should have a comprehensive overview of the OIDs related to PHR. NHN shall be informed of the OID of a new document source.
 
 OID (Object Identifiers) are unique identifiers for objects or things. **Anything can have an OID, and an OID is nothing more than a set of numbers and dots (.) which make up a hierarchical structure**. In PHR, OIDs are used to unambiguously identify a system or facility. The OIDs might get translated by the systems into the actual URL, which means the URL can change, but the OID stays the same. OIDs are also used in logging. OIDs have a "tree/path"-like structure, and can be represented by its numerical or text variant.  
 More about OIDs on [NHN's Developer portal ↗](https://utviklerportal.nhn.no/informasjonstjenester/pasientens-journaldokumenter-i-kjernejournal/mer-om-tjenesten/oider/) (In Norwegian).  
@@ -96,7 +96,7 @@ The OID-base which NDE governs has the following OID structure for document shar
 
 ## Document consuming process
 Below is a diagram showing the process of retrieving the document-list and the document. Each affinity domain has its own XCA, which again has its own registry and repositories.  
-When querying for a document-list, the registry is queried, as it holds the metadata and references to the documents in the repository. When retrieving a document, the repository is queried with the ID from the Registry metadata item of interest.
+When querying for a list of documentr , the Registry is queried, as it holds the metadata and references to the documents in the repository. When retrieving a document, the repository is queried with the ID from the Registry metadata item of interest.
 ```mermaid
 sequenceDiagram
     actor GP
@@ -235,7 +235,7 @@ PID
     PID.11 |100 Main St^^Metropolis^Il^44130^USA
 ```
 
-*Example HL7 snippet for PID-type(Formatted)*
+*Example HL7 snippet for PID-type (Formatted)*
 
 When representing a type in **XML**, each `PID`-parts is represented as its own value in an array of strings. Each part is separated into its own `<Value>`-tag
 ```xml
@@ -485,7 +485,7 @@ See [4.2.2 Association Types - profiles.ihe.net ↗](https://profiles.ihe.net/IT
 
 ### ExternalIdentifierType (`<ExternalIdentifier>`)  
 
-Externalidentifiers are identifiers which exist outside the boundaries of the submitted SOAP-XML. These identifiers, such as patient IDs or document unique IDs are considered to be real-world identifiers that have global meaning external to the document Registry or other transaction.
+Externalidentifiers are identifiers which exist outside the boundaries of the submitted SOAP-XML. These identifiers, such as patient IDs or document unique IDs are considered to be real-world identifiers that have global meaning external to the Document Registry or other transaction.
 
 | Property  | Description |
 |---|---|
@@ -534,8 +534,6 @@ Externalidentifiers are identifiers which exist outside the boundaries of the su
 
 *Table x: Description of Slot*
 
-
-#### Example  
 ```xml
 <Slot name="authorPerson">
     <ValueList>
@@ -544,7 +542,7 @@ Externalidentifiers are identifiers which exist outside the boundaries of the su
     </ValueList>
 </Slot>
 ```
-*Example of Slot with two values(HL7 XCN) in valuelist*
+*Example of Slot with two values (HL7 XCN) in valuelist*
 
 ```c#
 [SlotType]
@@ -552,6 +550,75 @@ Externalidentifiers are identifiers which exist outside the boundaries of the su
             [Value] [0..*]
 ```
 *Cardinality of SlotType*
+
+
+### RegistryResponse  (`<RegistryResponse>`)  
+`<RegistryResponse>` is a somewhat generic response returned from the Document Registry or Document Repository, it can contain a response status, with or without a list of error or warnings related to the request.
+
+
+| Property  | Description |
+|---|---|
+| **Name** | RegistryResponse |
+| **Can be found** | SOAP Response Body |
+| **Usage** | Multi-purpose response message structure |
+| **Class Name** | RegistryResponseType |
+
+*Table x: Description of Slot*
+
+```xml
+<RegistryResponse 
+    status="urn:oasis:names:tc:ebxml-regrep:ResponseStatusType:Failure" 
+    xmlns="urn:oasis:names:tc:ebxml-regrep:xsd:rs:3.0">
+    <RegistryErrorList 
+        highestSeverity="urn:oasis:names:tc:ebxml-regrep:ErrorSeverityType:Error">
+        <RegistryError 
+            codeContext="Error while updating registry" 
+            errorCode="XDSRegistryError" 
+            severity="urn:oasis:names:tc:ebxml-regrep:ErrorSeverityType:Error" 
+            location="XDS Registry" />
+        <RegistryError 
+            codeContext="Empty or invalid Registry objects in RegistryObjectList" 
+            errorCode="XDSRegistryError" 
+            severity="urn:oasis:names:tc:ebxml-regrep:ErrorSeverityType:Error" 
+            location="XDS Registry" />
+    </RegistryErrorList>
+</RegistryResponse>
+```
+
+*Example of RegistryResponse with two RegistryErrors in RegistryErrorList*
+
+
+```c#
+[RegistryResponseType]
+    [ValueListType] [1..1]
+            [Value] [0..*]
+```
+
+*Cardinality of RegistryResponse*
+
+
+### SoapFault (`<Fault>`)
+SOAP faults are error reporting mechanism for errors related to the structure or conformity of a SOAP-message. It contains exception data created by the application ie. when serialization of a SOAP-message resulted in an error
+
+| Property  | Description |
+|---|---|
+| **Name** | Fault |
+| **Can be found** | SOAP Response Body |
+| **Usage** | Generic Fault type for displaying errors related to SOAP-structure |
+| **Class Name** | FaultType |
+
+*Table x: Description of SoapFault*
+
+```xml
+<Slot name="authorPerson">
+    <ValueList>
+        <Value>565505933^GREVLING^KVART^^^^^^&amp;2.16.578.1.12.4.1.4.4&amp;ISO</Value>
+        <Value>123456789^NORDMANN^OLA^^^^^^&amp;2.16.578.1.12.4.1.4.4&amp;ISO</Value>
+    </ValueList>
+</Slot>
+```
+
+*Example of Slot with two values (HL7 XCN) in valuelist*
 
 
 ## Stable vs. On-Demand Documents  
@@ -573,17 +640,6 @@ The document is classified in the Registry as an attribute in an `<ExtrinsicObje
 
 ## Transactions In IHE XDS  
 Below are the transactions supported by default by **PJD.XcaDocumentSource**. Each transaction section contains a table defining the properties of the transaction.  
-
-**Example table:**  
-| Property  | Description |
-|---|---|
-| HTTP action | POST |
-| Endpoint    | Relative path. (eg. `/Registry/Services/RegistryService`) |
-| SOAP request | Item in the request `<Body>`. (eg. `<AdhocQueryRequest>`) |
-| SOAP request action | Item in `<Action>` in `<Header>`. (eg. urn:ihe:iti:2007:RegistryStoredQuery) |
-| SOAP response | Item in the Response `<Body>`. (eg. `<AdhocQueryResponse>`) |
-| SOAP response action | Item in `<Action>` in `<Header>`. (eg. urn:ihe:iti:2007:RegistryStoredQueryResponse) |
-*Table x: Example of table structure for describing a transaction*
 
 ### ITI-18 - Registry Stored Query 
 This transaction is used in a dialogue between the Document Requester and the Document Registry to query documents with specific properties.  
@@ -629,7 +685,9 @@ The example below shows an `<AdhocQueryRequest>` with id `urn:uuid:14d4debf-8f97
     </AdhocQuery>
 </AdhocQueryRequest>
 ```
+
 *AdhocQueryRequest with FindDocuments stored query with a slot for patientId And Status*
+
 
 ```c#
 [AdhocQueryRequest]
@@ -637,7 +695,9 @@ The example below shows an `<AdhocQueryRequest>` with id `urn:uuid:14d4debf-8f97
     [AdhocQuery]        [1..1]
         [SlotType]      [1..*]
 ```
+
 *Cardinality of AdhocQueryRequest*
+
 
 > **🔶 Implementation Note x:** <br> While there are many StoredQueries, **PJD.XcaDocumentSource only supports the ones in the table below**, out of the box  
  
@@ -704,7 +764,7 @@ More on [ITI-39 - profiles.ihe.net ↗](https://profiles.ihe.net/ITI/TF/Volume2/
 
 
 ### ITI-41 Provide and Register Document Set.b
-The ITI-41 transaction is used to upload **metadata** and **documents** to the Document Registry and Repository, respectively. Internally, the **ITI-41 request** is transformed into an **ITI-42 request**, which is sent to the **Registry**. If the **Registry Request** is successful, the document is uploaded to the **Repository**. If an error occurs while uploading the registry content, the request is aborted (atomicity). 
+The ITI-41 transaction is used to upload **metadata** and **documents** to the Document Registry and Repository, respectively. Internally, the **ITI-41 request** is transformed into an **ITI-42 request**, which is sent to the **Registry**. If the **Registry Request** is successful, the document is uploaded to the **Repository**. If an error occurs while uploading the Registry content, the request is aborted (atomicity). 
 > The **ITI-41** (and **ITI-42**) transactions can seem intimidating in size.
 However, it's merely a culmination of the types and formats explained earlier in the document
 
@@ -765,13 +825,13 @@ However, it's merely a culmination of the types and formats explained earlier in
     [Document]                          [1..*]
 ```
 
-*Cardinality of RetrieveDocumentSetRequest*
+*Cardinality of ProvideAndRegisterDocumentSetRequest*
 
 More on [ITI-41 - profiles.ihe.net ↗](https://profiles.ihe.net/ITI/TF/Volume2/ITI-41.html)  
 
 
 ### ITI-42 Register Document Set.b
-Register Document Set is used to upload metadata to the **Document Registry**. A `<RegisterDocumentSetRequest>` is provided, containing the items to be added to the Registry.
+Register Document Set is used to upload metadata to the **Document Registry**. A `<RegisterDocumentSetRequest>` is provided, containing the items to be added to the Registry. **Similar to ITI-41**, the metadata or associated resources for a patient is provided, **however**, in this case, **no actual document is provided**. This might be because the document already exists elsewhere or because only registering metadata is appropriate.
 
 | Property  | Description |
 |---|---|
@@ -784,6 +844,55 @@ Register Document Set is used to upload metadata to the **Document Registry**. A
 | SOAP response action | urn:ihe:iti:2007:RegisterDocumentSet-bResponse |
 
 *Table x: ITI-42 request*
+
+
+```xml
+<RegisterDocumentSetRequest xmlns="urn:ihe:iti:xds-b:2007">
+    <SubmitObjectsRequest xmlns="urn:oasis:names:tc:ebxml-regrep:xsd:lcm:3.0">
+        <RegistryObjectList xmlns="urn:oasis:names:tc:ebxml-regrep:xsd:rim:3.0">
+            <RegistryPackage 
+                id="RegistryPackage01" 
+                objectType="urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:RegistryPackage">
+                [......]
+            </RegistryPackage>
+            <ExtrinsicObject 
+                id="ExtrinsicObject01" 
+                objectType="urn:uuid:7edca82f-054d-47f2-a032-9b2a5b5186c1" 
+                status="urn:oasis:names:tc:ebxml-regrep:StatusType:Approved" 
+                mimeType="application/pdf">
+                [......]
+            </ExtrinsicObject>
+            <Association 
+                id="Association01" 
+                objectType="urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:Association" 
+                associationType="urn:oasis:names:tc:ebxml-regrep:AssociationType:HasMember" 
+                sourceObject="RegistryPackage01" 
+                targetObject="ExtrinsicObject01">
+                <Slot name="SubmissionSetStatus">
+                    <ValueList>
+                        <Value>Original</Value>
+                    </ValueList>
+                </Slot>
+            </Association>
+        </RegistryObjectList>
+    </SubmitObjectsRequest>
+</RegisterDocumentSetRequest>
+```
+
+*Example of RegisterDocumentSet request*
+
+
+```c#
+[RegisterDocumentSetRequest]
+    [SubmitObjectsRequest]              [1..*]
+        [RegistryObjectList]            [1..1]
+            [Association]               [0..*]
+            [RegistryPackage]           [0..*]
+            [ExtrinsicObject]           [0..*]
+```
+
+*Cardinality of RegisterDocumentSetRequest*
+
 
 More on [ITI-42 - profiles.ihe.net ↗](https://profiles.ihe.net/ITI/TF/Volume2/ITI-42.html)  
 
@@ -802,7 +911,7 @@ The Document Consumer must use the following attributes received from `<AdhocQue
 | Property  | Description |
 |---|---|
 | HTTP action | POST |
-| Short description | Get a single document |
+| Short description | Get a document or multiple documents |
 | Endpoint    | /Repository/Services/RepositoryService |
 | SOAP request | `<RetrieveDocumentSetRequest>` |
 | SOAP request action | urn:ihe:iti:2007:RegistryStoredQuery |
@@ -823,7 +932,9 @@ The Document Consumer must use the following attributes received from `<AdhocQue
     </ns2:DocumentRequest>
 </ns2:RetrieveDocumentSetRequest>
 ```
+
 *RetrieveDocumentSetRequest request for document with Id 105085430*
+
 
 ```c#
 [RetrieveDocumentSetRequest]
@@ -832,18 +943,93 @@ The Document Consumer must use the following attributes received from `<AdhocQue
         [RepositoryUniqueId]    [1..1]
         [DocumentUniqueId]      [1..1]
 ```
+
 *Cardinality of RetrieveDocumentSetRequest*
+
 
 More on [ITI-43 - profiles.ihe.net ↗](https://profiles.ihe.net/ITI/TF/Volume2/ITI-43.html)  
 
 
-### ITI-62 Remove Objects
-Remove objects is to 
+### ITI-62 Remove Objects Request
+Remove objects is used to remove objects from the **Document Registry**. A list of `<ObjectRef>`s are provided, specifying the identifier for each item to be removed from the **Registry**.
+
+| Property  | Description |
+|---|---|
+| HTTP action | POST |
+| Short description | Remove one or more items from the **Document Registry** by specifying the `Id` of the item(s) to remove |
+| Endpoint    | /Registry/Services/RegistryService |
+| SOAP request | `<RemoveObjectsRequest>` |
+| SOAP request action | urn:ihe:iti:2010:DeleteDocumentSet |
+| SOAP response | `<RegistryResponse>`          |
+| SOAP response action | urn:ihe:iti:2010:DeleteDocumentSetResponse |
+
+*Table x: ITI-62 request*
+
+
+```xml
+<lcm:RemoveObjectsRequest xmlns:lcm="urn:oasis:names:tc:ebxml-regrep:xsd:lcm:3.0">
+    <rim:ObjectRefList xmlns:rim="urn:oasis:names:tc:ebxml-regrep:xsd:rim:3.0">
+        <rim:ObjectRef id="Association01"/>
+        <rim:ObjectRef id="RegistryPackage01"/>
+        <rim:ObjectRef id="ExtrinsicObject03"/>
+    </rim:ObjectRefList>
+</lcm:RemoveObjectsRequest>
+```
+
+*RemoveObjectsRequest request for the removal of objects Association01, RegistryPackage01 and ExtrinsicObject03*
+
+
+```c#
+[RemoveObjectsRequest]
+    [ObjectRefList]       [1..1]
+        [ObjectRef]       [1..*]
+```
+
+*Cardinality of RemoveObjectsRequest*
+
+### ITI-86 Delete Document Set
+Remove objects is used to remove objects from the **Document Registry**. A list of `<ObjectRef>`s are provided, specifying the identifier for each item to be removed from the **Registry**.
+
+| Property  | Description |
+|---|---|
+| HTTP action | POST |
+| Short description | Delete documents |
+| Endpoint    | /Repository/Services/RepositoryService |
+| SOAP request | `<RemoveDocumentsRequest>` |
+| SOAP request action | urn:ihe:iti:2017:RemoveDocuments |
+| SOAP response | `<RegistryResponse>`          |
+| SOAP response action | urn:ihe:iti:2017:RemoveDocumentsResponse |
+
+*Table x: ITI-86 request*
+
+
+```xml
+<rmd:RemoveDocumentsRequest xmlns:rmd="urn:ihe:iti:rmd:2017">
+    <xds:DocumentRequest xmlns:xds="urn:ihe:iti:xds-b:2007">
+        <xds:HomeCommunityId>2.16.578.1.12.4.5.100.1</xds:HomeCommunityId>
+        <xds:RepositoryUniqueId>2.16.578.1.12.4.5.100.1.2</xds:RepositoryUniqueId>
+        <xds:DocumentUniqueId>ExtrinsicObject03</xds:DocumentUniqueId>
+    </xds:DocumentRequest>
+</rmd:RemoveDocumentsRequest>
+```
+
+*RemoveDocumentsRequest request for the removal of ExtrinsicObject03*
+
+
+```c#
+[RemoveDocumentsRequest]
+    [DocumentRequest]           [1..*]
+        [HomeCommunityId]       [1..1]
+        [RepositoryUniqueId]    [1..1]
+        [DocumentUniqueId]      [1..1]
+```
+
+*Cardinality of RemoveDocumentsRequest*
 
 
 ## Code stuff
 #### Code example - by `ObjectRef` or `LeafClass`
-The simplest way to return only identifiers is to create a new list of ObjectRefTypes instead of 
+The simplest way to return only identifiers is to create a new list of ObjectRefTypes
 ```c#
 switch (adhocQueryRequest.ResponseOption.ReturnType)
 {

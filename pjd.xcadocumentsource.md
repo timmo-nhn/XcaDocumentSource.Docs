@@ -10,7 +10,7 @@ Patient Health Records (PHR) facilitates Cross enterprise document sharing betwe
 * Enable access to patients to their medical records throughout Norway.
 
 
-## Document Semantics  
+## Semantics Used  
 This section defines how different elements are formatted and referenced within the documentation.
 
 ### External hyperlinks
@@ -93,6 +93,36 @@ The OID-base which NDE governs has the following OID structure for document shar
   * 2.16.578.1.12.4.1.7.1 – Community base OIDs governed by NHN
     * 2.16.578.1.12.4.1.7.1.1 – National community
 > **⚠️ Alert x:** <br> Historically, this OID-base has belonged to The Norwegian Directorate of eHealth (NDE/e-Helse) for PHR (formely known as Dokumentdeling)
+
+## Document consuming process
+Below is a diagram showing the process of retrieving the document-list and the document. Each affinity domain has its own XCA, which again has its own registry and repositories.  
+When querying for a document-list, the registry is queried, as it holds the metadata and references to the documents in the repository. When retrieving a document, the repository is queried with the ID from the Registry metadata item of interest.
+```mermaid
+sequenceDiagram
+    actor GP
+    participant KJ as EHR/Kjernejournal
+    participant NHN_XCA
+    participant HSØ_XCA
+    participant HV_XCA
+    participant HN_XCA
+    GP->>KJ:Login
+    KJ-->>KJ:Select patient
+    KJ-->>KJ:Open PHR-instance
+    KJ->>NHN_XCA:ITI-18
+    NHN_XCA->>HSØ_XCA:ITI-38
+    HSØ_XCA->>NHN_XCA:Response
+    NHN_XCA->>HV_XCA:ITI-38
+    HV_XCA->>NHN_XCA:Response
+    NHN_XCA->>HN_XCA:ITI-38
+    HN_XCA->>NHN_XCA:Response
+    NHN_XCA->>KJ:Document-list
+    GP->>KJ:Opens Document X from HSØ
+    KJ->>NHN_XCA:ITI-43
+    NHN_XCA->>HSØ_XCA:ITI-39
+    HSØ_XCA->>NHN_XCA:Response
+    NHN_XCA->>KJ:Document
+```
+*Diagram 1: Simplified example on a query of document, each XCA is its own affinity domain, and the response for each domain may be different (ie. some domains reject requests from certain GP-roles)*
 
 
 ## SOAP-Message and SOAP-message formats  
@@ -229,7 +259,7 @@ When representing a type in **XML**, each `PID`-parts is represented as its own 
 ```xml
 <Value>123456789^NORDMANN^OLA^^^^^^&amp;2.16.578.1.12.4.1.4.4&amp;ISO</Value>
 ```
-*Example of **XCN datatype** wrapped in XML, hence the `&amp;` escape character*
+*Example of **XCN datatype** wrapped in XML*
 
 Below is an explanation of each field in the **HL7 XCN** data type
 | Field | Type | Value |
@@ -283,6 +313,19 @@ See [4.2.3.1.7 Metadata Attribute Data types - profiles.ihe.net ↗](https://pro
 </ExtrinsicObject>
 ```
 *Example of ExtrinsicObject with `**Stable** objectType and a single **creationTime** Slot*
+
+```c#
+[ExtrinsicObject (home[1..1]) ]
+    [ClassificationType]        [0..*]
+        [SlotType]              [0..*]
+    [ExternalIdentifierType]    [0..*]
+        [Name]                  [0..1]
+            [LocalizedString]   [0..1]
+    [SlotType]                  [0..*]
+    [Name]                      [0..1]
+        [LocalizedString]       [0..1]
+```
+*Cardinality of RegistryPackage*
 
 
 ### RegistryPackageType (`<RegistryPackage>`)  
@@ -361,10 +404,26 @@ An `<Association>` is used to bind two or more **types** together in order to cr
 *Example of Association binding a RegistryPackage to an ExtrinsicObject*
 
 ```c#
-[AssociationType]
+[AssociationType (sourceObject[1..1] targetObject[1..1]) ]
     [Slot]          [0..1]
 ```
-*Cardinality of Classification*
+*Cardinality of Classification with notable attributes sourceObject and targetObject*
+
+```mermaid
+graph LR
+    ex[ExtrinsicObject]
+    as[Association]
+    re[RegistryPackage]
+    do[Document]
+    so[sourceObject]
+    to[targetObject]
+
+    as-->so--->re
+    as-->to-->ex
+    to-->do
+    do-->ex
+```
+*Figure x: connection between objects.*
 
 See [4.2.2 Association Types - profiles.ihe.net ↗](https://profiles.ihe.net/ITI/TF/Volume3/ch-4.2.html#4.2.2) for more information.
 
@@ -398,7 +457,7 @@ See [4.2.2 Association Types - profiles.ihe.net ↗](https://profiles.ihe.net/IT
 *Example of Classification following the classificationScheme for XDSSubmissionset.typeCode, classifying the type of document. The value contains the OID for the codeSystem*
 
 ```c#
-[ClassificationType]
+[ClassificationType (classificationScheme [1..1]) ]
     [SlotType]              [0..*]
         [ValueListType]     [1..1]
             [Value]         [0..*]
@@ -464,7 +523,7 @@ Externalidentifiers are identifiers which exist outside the boundaries of the su
 
 
 ### SlotType  (`<Slot>`)  
-`<Slot>` is a generic subtype container for information. It's usually nesten in other types, such as `<Classification>`, `<ExternalIdentifier>` or directly in types such as `<ExtrinsicObject>` and `<RegistryPackage>`. 
+`<Slot>` is a generic container subtype for information. It's usually nesten in other types, such as `<Classification>`, `<ExternalIdentifier>` or directly in types such as `<ExtrinsicObject>` and `<RegistryPackage>`. 
 
 | Property  | Description |
 |---|---|
@@ -526,7 +585,7 @@ Below are the transactions supported by default by **PJD.XcaDocumentSource**. Ea
 | SOAP response action | Item in `<Action>` in `<Header>`. (eg. urn:ihe:iti:2007:RegistryStoredQueryResponse) |
 *Table x: Example of table structure for describing a transaction*
 
-### Registry Stored Query ITI-18  
+### ITI-18 - Registry Stored Query 
 This transaction is used in a dialogue between the Document Requester and the Document Registry to query documents with specific properties.  
 A request with specific search parameters is sent from a Document Requester to the Document Registry, which sends back a list of documents that satisfy the search parameters.
 
@@ -604,7 +663,132 @@ More on [ITI-18 - profiles.ihe.net ↗](https://profiles.ihe.net/ITI/TF/Volume2/
 See [3.18.4.1.2.3.7 Parameters for Required Queries - profiles.ihe.net ↗](https://profiles.ihe.net/ITI/TF/Volume2/ITI-18.html#3.18.4.1.2.3.7) for more information on query parameters aswell as AND/OR semantics
 
 
-### Retrieve Document Set ITI-43
+### ITI-38 - Cross Gateway Query 
+Cross Gateway Query is essentially Exactly the same as an **ITI-18 AdhocQuery request**, apart from the `<Action>`-field in the `<Header>` of the **SOAP-request**.
+In practice, The ITI-38 request originates from the NHN XCA gateway, and is used when querying documents across **Affinity domains**.  
+Internally, the ITI-38 request is transformed into an **ITI-18** request, and sent via `HTTP` to the Registry-endpoint as a normal **ITI-18-request**.
+
+| Property  | Description |
+|---|---|
+| HTTP action | POST |
+| Short description | Get list of metadata for patient or resource |
+| Endpoint | /XCA/Services/RespondingGatewayService |
+| SOAP request | `<AdhocQueryRequest>` |
+| SOAP request action | urn:ihe:iti:2007:CrossGatewayQuery |
+| SOAP response | `<AdhocQueryResponse>` |
+| SOAP response action | urn:ihe:iti:2007:CrossGatewayQueryResponse |
+
+*Table x: ITI-38 request*
+
+More on [ITI-38 - profiles.ihe.net ↗](https://profiles.ihe.net/ITI/TF/Volume2/ITI-38.html)  
+
+
+### ITI-39 - Cross Gateway Retrieve
+Cross Gateway Retrieve is essentially Exactly the same as an **ITI-43 Retrieve Document Set request**, apart from the `<Action>`-field in the `<Header>` of the **SOAP-request**.
+In practice, The ITI-39 request originates from the NHN XCA gateway, and is used when querying documents across **Affinity domains**.  
+Internally, the ITI-39 request is transformed into an **ITI-43** request, and sent via `HTTP` to the Repository-endpoint as a normal **ITI-43-request**.
+
+| Property  | Description |
+|---|---|
+| HTTP action | POST |
+| Short description | Get document or set of documents from Repository |
+| Endpoint    | /XCA/Services/RespondingGatewayService |
+| SOAP request | `<RetrieveDocumentSetRequest>` |
+| SOAP request action | urn:ihe:iti:2007:CrossGatewayRetrieve |
+| SOAP response | `<RetrieveDocumentSetResponse>`          |
+| SOAP response action |rn:ihe:iti:2007:CrossGatewayRetrieveResponse |
+
+*Table x: ITI-39 request*
+
+More on [ITI-39 - profiles.ihe.net ↗](https://profiles.ihe.net/ITI/TF/Volume2/ITI-39.html)  
+
+
+### ITI-41 Provide and Register Document Set.b
+The ITI-41 transaction is used to upload **metadata** and **documents** to the Document Registry and Repository, respectively. Internally, the **ITI-41 request** is transformed into an **ITI-42 request**, which is sent to the **Registry**. If the **Registry Request** is successful, the document is uploaded to the **Repository**. If an error occurs while uploading the registry content, the request is aborted (atomicity). 
+> The **ITI-41** (and **ITI-42**) transactions can seem intimidating in size.
+However, it's merely a culmination of the types and formats explained earlier in the document
+
+| Property  | Description |
+|---|---|
+| HTTP action | POST |
+| Short description | Get document or set of documents from Repository |
+| Endpoint    | /XCA/Services/RespondingGatewayService |
+| SOAP request | `<ProvideAndRegisterDocumentSetRequest>` |
+| SOAP request action | urn:ihe:iti:2007:ProvideAndRegisterDocumentSet-b |
+| SOAP response | `<RegistryResponse>`          |
+| SOAP response action | urn:ihe:iti:2007:ProvideAndRegisterDocumentSet-bResponse |
+
+*Table x: ITI-41 request*
+
+```xml
+<ProvideAndRegisterDocumentSetRequest xmlns="urn:ihe:iti:xds-b:2007">
+    <SubmitObjectsRequest xmlns="urn:oasis:names:tc:ebxml-regrep:xsd:lcm:3.0">
+        <RegistryObjectList xmlns="urn:oasis:names:tc:ebxml-regrep:xsd:rim:3.0">
+            <RegistryPackage 
+                id="RegistryPackage01" 
+                objectType="urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:RegistryPackage">
+                [......]
+            </RegistryPackage>
+            <ExtrinsicObject 
+                id="ExtrinsicObject01" 
+                objectType="urn:uuid:7edca82f-054d-47f2-a032-9b2a5b5186c1" 
+                status="urn:oasis:names:tc:ebxml-regrep:StatusType:Approved" 
+                mimeType="application/pdf">
+                [......]
+            </ExtrinsicObject>
+            <Association 
+                id="Association01" 
+                objectType="urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:Association" 
+                associationType="urn:oasis:names:tc:ebxml-regrep:AssociationType:HasMember" 
+                sourceObject="RegistryPackage01" 
+                targetObject="ExtrinsicObject01">
+                <Slot name="SubmissionSetStatus">
+                    <ValueList>
+                        <Value>Original</Value>
+                    </ValueList>
+                </Slot>
+            </Association>
+        </RegistryObjectList>
+    </SubmitObjectsRequest>
+    <Document id="ExtrinsicObject01">JVBERi0xLjcNCiW1tb...</Document>
+</ProvideAndRegisterDocumentSetRequest>
+
+```
+
+```c#
+[ProvideAndRegisterDocumentSetRequest]
+    [SubmitObjectsRequest]              [1..*]
+        [RegistryObjectList]            [1..1]
+            [Association]               [0..*]
+            [RegistryPackage]           [0..*]
+            [ExtrinsicObject]           [0..*]
+    [Document]                          [1..*]
+```
+
+*Cardinality of RetrieveDocumentSetRequest*
+
+More on [ITI-41 - profiles.ihe.net ↗](https://profiles.ihe.net/ITI/TF/Volume2/ITI-41.html)  
+
+
+### ITI-42 Register Document Set.b
+Register Document Set is used to upload metadata to the **Document Registry**. A `<RegisterDocumentSetRequest>` is provided, containing the items to be added to the Registry.
+
+| Property  | Description |
+|---|---|
+| HTTP action | POST |
+| Short description | Get document or set of documents from Repository |
+| Endpoint    | /Registry/Services/RegistryService |
+| SOAP request | `<RegisterDocumentSetRequest>` |
+| SOAP request action | urn:ihe:iti:2007:RegisterDocumentSet-b |
+| SOAP response | `<RegistryReponse>`          |
+| SOAP response action | urn:ihe:iti:2007:RegisterDocumentSet-bResponse |
+
+*Table x: ITI-42 request*
+
+More on [ITI-42 - profiles.ihe.net ↗](https://profiles.ihe.net/ITI/TF/Volume2/ITI-42.html)  
+
+
+### ITI-43 - Retrieve Document Set 
 ITI-43 is used by Document Consumer to retrieve one or more documents from Document Repository.  
 The Document Consumer must use the following attributes received from `<AdhocQueryResponse>` via **ITI-18 Registry Stored Query**:  
 
@@ -625,7 +809,7 @@ The Document Consumer must use the following attributes received from `<AdhocQue
 | SOAP response | `<RetrieveDocumentSetResponse>`          |
 | SOAP response action | urn:ihe:iti:2007:RegistryStoredQueryResponse |
 
-*Table x: ITI-18 request*
+*Table x: ITI-43 request*
 
 >**🚩 National Extension**<br> [IHE ITI-TF Vol.3 4.2.3.2.26 - profiles.ihe.net ↗](https://profiles.ihe.net/ITI/TF/Volume3/ch-4.2.html#4.2.3.2.26) specifies constraints for a document unique ID. **PJD.XcaDocumentSource, aswell as other document sources in norway, does not enforce these constraints by default** - this falls onto the producing application
 
@@ -650,20 +834,12 @@ The Document Consumer must use the following attributes received from `<AdhocQue
 ```
 *Cardinality of RetrieveDocumentSetRequest*
 
+More on [ITI-43 - profiles.ihe.net ↗](https://profiles.ihe.net/ITI/TF/Volume2/ITI-43.html)  
 
-### Cross Gateway Query ITI-38 
-Cross Gateway Query is essentially Exactly the same as an ITI-18 AdhocQuery request, apart from the `<Action>`-field in the `<Header>` of the **SOAP-request**.
-In practice, The ITI-38 request originates from the NHN XCA gateway, and is used when querying documents across **Affinity domains**.
 
-| Property  | Description |
-|---|---|
-| HTTP action | POST |
-| Short description | Get list of metadata for patient or resource |
-| Endpoint    | /XCA/Services/RespondingGatewayService |
-| SOAP request | `<AdhocQueryRequest>` |
-| SOAP request action | urn:ihe:iti:2007:CrossGatewayQuery |
-| SOAP response | `<AdhocQueryResponse>`          |
-| SOAP response action | urn:ihe:iti:2007:CrossGatewayQueryResponse |
+### ITI-62 Remove Objects
+Remove objects is to 
+
 
 ## Code stuff
 #### Code example - by `ObjectRef` or `LeafClass`
@@ -687,4 +863,3 @@ switch (adhocQueryRequest.ResponseOption.ReturnType)
 }
 ```
 *Code-example on implementation of `<ResponseOption>`*  
-r

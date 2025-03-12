@@ -122,7 +122,7 @@ sequenceDiagram
     HSØ_XCA->>NHN_XCA:Response
     NHN_XCA->>KJ:Document
 ```
-*Diagram 1: Simplified example on a query of document, each XCA is its own affinity domain, and the response for each domain may be different (ie. some domains reject requests from certain GP-roles)*
+*Figure x: Simplified example on a query of document, each XCA is its own affinity domain, and the response for each domain may be different (ie. some domains reject requests from certain GP-roles)*
 
 
 ## SOAP-Message and SOAP-message formats  
@@ -162,12 +162,19 @@ There is excpected to be a **1:1 relationship** between the **SOAP action** (`<A
 *Table x: terminology used for types in IHE XDS*  
 
 ## Types in IHE XDS  
-There are different types used to contain and structure various pieces when storing and making documents available. It's imperative that the reader familiarizes themself with each type and where they usually reside in a **SOAP-message**.3
+There are different types used to contain and structure various pieces when storing and making documents available. It's imperative that the reader familiarizes themself with each type and where they usually reside in a **SOAP-message**.  
+The types can be abstracted to this diagram, showing how Document Sharing Objects contain metadata types, which in turn contains Coded values of Data on specific formats.
+```c#
+[Document Sharing Objects]
+    [Metadata Types]
+        [Coded Values]
+        [Data]
+        [HL7 Data Types]
+```
+*Generalized structure of data types in document sharing*
 
 
-[More on OIDs used nationally ↗](https://www.helsedirektoratet.no/digitalisering-og-e-helse/e-helsestandarder-og-standardiseringstiltak/oid-identifikatorserier-i-helse-og-omsorgstjenesten)
-
-### Document Sharing object correspondence  
+### Document Sharing Objects  
 Some of the **XML Types** described below can be used to represent different concepts.  
 The table below describes the different types.  
 
@@ -182,6 +189,26 @@ The table below describes the different types.
 
 *Table x: Document Sharing concept correspondence with XML Types*
 
+#### SubmissionSet
+A SubmisisonSet contains the details about all resources related to a specific document. Through Associations, other objects like Folders and DocumentEntries are linked to the submission set.
+More about SubmissionSet [4.1.1.1 SubmissionSet - profiles.ihe.net ↗](https://profiles.ihe.net/ITI/TF/Volume3/ch-4.1.html#4.1.1.1)
+
+#### Association
+Associations are links between a source objects and target object, such as a DocumentEntry and a SubmissionSet
+More about Associations [4.1.2 Association Types - profiles.ihe.net ↗](https://profiles.ihe.net/ITI/TF/Volume3/ch-4.1.html#4.1.2)
+
+#### DocumentEntry
+**DocumentEntry** contains attributes describing a document. It contains information about who created the document, what type of document it is, and where to retrieve it. **It does not contain the document itself**, as the documents reside in the **Document Repository**. **DocumentEntries** can differ based on the **XDS profile**, and can have state of `On-Demand` or `Stable`
+
+More about Documententry [4.1.1.3 DocumentEntry - profiles.ihe.net ↗](https://profiles.ihe.net/ITI/TF/Volume3/ch-4.1.html#4.1.1.3)
+
+#### Folder
+>**🚩 National Extension**<br> Folders are not required, nor widely used in Document Sharing in Norway. For conformancy reasons, **PJD.XcaDocumentSource** has support for storing and retrieving folders.
+
+A folder is a collection of DocumentEntry-objects that are related in some way, creating an arbitrary grouping relationship. Folder may be used to collect the DocumentEntry objects for the patient’s documents that relate to an exam event, such as the exam request and prior results as well as the eventual exam results.
+
+More about Folders [4.1.1.2 Folder - profiles.ihe.net ↗](https://profiles.ihe.net/ITI/TF/Volume3/ch-4.1.html#4.1.1.2)
+
 
 ### HL7 Data types  
 **All data types are represented as a string literal and are contained within other types**. Some might contain special characters, denoting a structure.  
@@ -192,7 +219,7 @@ Several data types are used in document sharing in Norway, below are some exampl
 
 #### HL7 separators  
 
-HL7 covers a wide span of topics. However, **the part of the HL7 standard relevant in this document is the terminology and data types aspect**.  
+HL7 covers a wide span of topics. The part of the HL7 standard relevant in this document is the terminology and data types aspect.  
 To better understand the structure of the following XML message examples, an explanation of the separator symbols are warranted. The table below describes the most common separators and their purpose, in a hierarchical manner, meaning the separator below is usually nested within the preceding separator. A data type can contain other data types as part of its structure.
 
 Separator | Symbol | Usage |
@@ -259,7 +286,7 @@ When representing a type in **XML**, each `PID`-parts is represented as its own 
 ```xml
 <Value>123456789^NORDMANN^OLA^^^^^^&amp;2.16.578.1.12.4.1.4.4&amp;ISO</Value>
 ```
-*Example of **XCN datatype** wrapped in XML*
+*Example of **XCN datatype** in XML*
 
 Below is an explanation of each field in the **HL7 XCN** data type
 | Field | Type | Value |
@@ -282,7 +309,12 @@ More on XCN datatype: [HL7 v2.6 - XCN - hl7-definition.caristix.com ↗](https:/
 See [4.2.3.1.7 Metadata Attribute Data types - profiles.ihe.net ↗](https://profiles.ihe.net/ITI/TF/Volume3/ch-4.2.html#4.2.3.1.7) for more information.
 
 
-### ExtrinsicObjectType (`<ExtrinsicObject>`)  
+### Data types in Document Sharing Metadata
+The IHE XDS architecture is based on OASIS ebXML RegRep Version 4.0, which shares alot of the types and workflows, namely the Registry Information Model (RIM).  
+More on RIM in IHE [IHE ITI TF Vol3 - profiles.ihe.net ↗](https://profiles.ihe.net/ITI/TF/Volume3/ch-4.2.html)
+More on ebXML RegRep [OASIS ebXML RegRep Version 4.0 - docs.oasis-open.org ↗](https://docs.oasis-open.org/regrep/regrep-core/v4.0/regrep-core-rim-v4.0.html)
+
+#### ExtrinsicObjectType (`<ExtrinsicObject>`)  
 `<ExtrinsicObject>` (or `DocumentEntry`) describes **metadata** for a given document such as who created the document and what type of document it is, aswell as the identifier used to retrieve the document. This metadata is usually what is displayed in an PHR-system or similar.
 
 | Property  | Description |
@@ -295,7 +327,7 @@ See [4.2.3.1.7 Metadata Attribute Data types - profiles.ihe.net ↗](https://pro
 *Table x: Description of `<ExtrinsicObject>`*
 
 
-#### Example  
+##### Example  
 ```xml
 <ExtrinsicObject 
     id="ExtrinsicObject01" 
@@ -328,7 +360,7 @@ See [4.2.3.1.7 Metadata Attribute Data types - profiles.ihe.net ↗](https://pro
 *Cardinality of RegistryPackage*
 
 
-### RegistryPackageType (`<RegistryPackage>`)  
+#### RegistryPackageType (`<RegistryPackage>`)  
 `<RegistryPackage>` can be used to describe a **Submission set**, which describes the user or authoring institution which is uploading the document. This information can differ from the `<ExtrinsicObject>`, as the author and the uploader may be different people or institutions.  
 
 | Property  | Description |
@@ -340,7 +372,7 @@ See [4.2.3.1.7 Metadata Attribute Data types - profiles.ihe.net ↗](https://pro
 
 *Table x: Description of ExtrinsicObject*
 
-
+##### Example  
 ```xml
 <RegistryPackage 
     id="RegistryPackage01" 
@@ -373,7 +405,7 @@ See [4.2.3.1.7 Metadata Attribute Data types - profiles.ihe.net ↗](https://pro
 *Cardinality of RegistryPackage*
 
 
-### AssociationType (`<Association>`)  
+#### AssociationType (`<Association>`)  
 An `<Association>` is used to bind two or more **types** together in order to create a logical connection between them. This is done using attributes `sourceObject` and `targetObject`. An `<Association>` can have multiple states based on its `associationType`
 
 | Property  | Description |
@@ -385,7 +417,7 @@ An `<Association>` is used to bind two or more **types** together in order to cr
 
 *Table x: Description of Association*
 
-
+##### Example  
 ```xml
 <Association 
     id="Association01" 
@@ -427,7 +459,7 @@ graph LR
 
 See [4.2.2 Association Types - profiles.ihe.net ↗](https://profiles.ihe.net/ITI/TF/Volume3/ch-4.2.html#4.2.2) for more information.
 
-### ClassificationType (`<Classification>`)  
+#### ClassificationType (`<Classification>`)  
 `<Classification>` is a container for information which is usually used to classify and group information. Classifications follow a ClassificationScheme (`classificationScheme`) which defines what the classification is classifying. `<Classification>`s are usually nesten in other types, such as `<ExtrinsicObject>` and `<RegistryPackage>`.  
 
 | Property  | Description |
@@ -440,7 +472,7 @@ See [4.2.2 Association Types - profiles.ihe.net ↗](https://profiles.ihe.net/IT
 *Table x: Description of `<Classification>`*
 
 
-#### Example  
+##### Example  
 ```xml
 <Classification 
     objectType="urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:Classification" 
@@ -467,7 +499,7 @@ See [4.2.2 Association Types - profiles.ihe.net ↗](https://profiles.ihe.net/IT
 *Cardinality of Classification*
 
 
-#### ClassificationSchemes
+##### ClassificationSchemes
 | ClassificationScheme  | UUID |
 |---|---|
 | XDSDocumentEntry.healthcareFacilityTypeCode | urn:uuid:f33fb8ac-18af-42cc-ae0e-ed0b0bdb91e1 |
@@ -483,7 +515,7 @@ See [4.2.2 Association Types - profiles.ihe.net ↗](https://profiles.ihe.net/IT
 *Table x: Valid ClassificationSchemes for a `<Classification>`*
 
 
-### ExternalIdentifierType (`<ExternalIdentifier>`)  
+#### ExternalIdentifierType (`<ExternalIdentifier>`)  
 
 Externalidentifiers are identifiers which exist outside the boundaries of the submitted SOAP-XML. These identifiers, such as patient IDs or document unique IDs are considered to be real-world identifiers that have global meaning external to the Document Registry or other transaction.
 
@@ -496,6 +528,8 @@ Externalidentifiers are identifiers which exist outside the boundaries of the su
 
 *Table x: Description of ExternalIdentifier*
 
+
+##### Example  
 ```xml
 <ExternalIdentifier 
     id="df0a5ea1-d5ae-4a26-b1f0-abc0e33ff04a" 
@@ -512,17 +546,14 @@ Externalidentifiers are identifiers which exist outside the boundaries of the su
 
 ```c#
 [ClassificationType]
-    [SlotType]              [0..*]
-        [ValueListType]     [1..1]
-            [Value]         [0..*]
     [Name]                  [0..1]
-        [LocalizedString]   [0..*]
+        [LocalizedString]   [1..1]
 ```
 *Cardinality of Classification*
 
 
 
-### SlotType  (`<Slot>`)  
+#### SlotType  (`<Slot>`)  
 `<Slot>` is a generic container subtype for information. It's usually nesten in other types, such as `<Classification>`, `<ExternalIdentifier>` or directly in types such as `<ExtrinsicObject>` and `<RegistryPackage>`. 
 
 | Property  | Description |
@@ -534,6 +565,8 @@ Externalidentifiers are identifiers which exist outside the boundaries of the su
 
 *Table x: Description of Slot*
 
+
+##### Example  
 ```xml
 <Slot name="authorPerson">
     <ValueList>
@@ -552,7 +585,7 @@ Externalidentifiers are identifiers which exist outside the boundaries of the su
 *Cardinality of SlotType*
 
 
-### RegistryResponse  (`<RegistryResponse>`)  
+#### RegistryResponse  (`<RegistryResponse>`)  
 `<RegistryResponse>` is a somewhat generic response returned from the Document Registry or Document Repository, it can contain a response status, with or without a list of error or warnings related to the request.
 
 
@@ -565,6 +598,8 @@ Externalidentifiers are identifiers which exist outside the boundaries of the su
 
 *Table x: Description of Slot*
 
+
+##### Example  
 ```xml
 <RegistryResponse 
     status="urn:oasis:names:tc:ebxml-regrep:ResponseStatusType:Failure" 
@@ -597,7 +632,7 @@ Externalidentifiers are identifiers which exist outside the boundaries of the su
 *Cardinality of RegistryResponse*
 
 
-### SoapFault (`<Fault>`)
+#### SoapFault (`<Fault>`)
 SOAP faults are error reporting mechanism for errors related to the structure or conformity of a SOAP-message. It contains exception data created by the application ie. when serialization of a SOAP-message resulted in an error
 
 | Property  | Description |
@@ -609,6 +644,8 @@ SOAP faults are error reporting mechanism for errors related to the structure or
 
 *Table x: Description of SoapFault*
 
+
+##### Example  
 ```xml
 <Slot name="authorPerson">
     <ValueList>
@@ -663,6 +700,7 @@ The example below shows an `<AdhocQueryRequest>` with id `urn:uuid:14d4debf-8f97
 > **⚠️ AND/OR semantics** <br> An `<AdhocQueryRequest>` contains `<Slot>`s to specify which parameters/metadata to search for. Each `<Slot>` in the `<AdhocQueryRequest>` works as a **AND-clause**. However, for some slots, the `<Value>` elements in the `<ValueList>` works as an **OR-clause**  
 
 
+#### Example  
 ```xml
 <AdhocQueryRequest xmlns="urn:oasis:names:tc:ebxml-regrep:xsd:query:3.0">
     <ResponseOption returnType="LeafClass" returnComposedObjects="true" />
@@ -765,6 +803,7 @@ More on [ITI-39 - profiles.ihe.net ↗](https://profiles.ihe.net/ITI/TF/Volume2/
 
 ### ITI-41 Provide and Register Document Set.b
 The ITI-41 transaction is used to upload **metadata** and **documents** to the Document Registry and Repository, respectively. Internally, the **ITI-41 request** is transformed into an **ITI-42 request**, which is sent to the **Registry**. If the **Registry Request** is successful, the document is uploaded to the **Repository**. If an error occurs while uploading the Registry content, the request is aborted (atomicity). 
+
 > The **ITI-41** (and **ITI-42**) transactions can seem intimidating in size.
 However, it's merely a culmination of the types and formats explained earlier in the document
 
@@ -780,6 +819,8 @@ However, it's merely a culmination of the types and formats explained earlier in
 
 *Table x: ITI-41 request*
 
+
+#### Example  
 ```xml
 <ProvideAndRegisterDocumentSetRequest xmlns="urn:ihe:iti:xds-b:2007">
     <SubmitObjectsRequest xmlns="urn:oasis:names:tc:ebxml-regrep:xsd:lcm:3.0">
@@ -846,6 +887,8 @@ Register Document Set is used to upload metadata to the **Document Registry**. A
 *Table x: ITI-42 request*
 
 
+
+#### Example  
 ```xml
 <RegisterDocumentSetRequest xmlns="urn:ihe:iti:xds-b:2007">
     <SubmitObjectsRequest xmlns="urn:oasis:names:tc:ebxml-regrep:xsd:lcm:3.0">
@@ -922,6 +965,8 @@ The Document Consumer must use the following attributes received from `<AdhocQue
 
 >**🚩 National Extension**<br> [IHE ITI-TF Vol.3 4.2.3.2.26 - profiles.ihe.net ↗](https://profiles.ihe.net/ITI/TF/Volume3/ch-4.2.html#4.2.3.2.26) specifies constraints for a document unique ID. **PJD.XcaDocumentSource, aswell as other document sources in norway, does not enforce these constraints by default** - this falls onto the producing application
 
+
+#### Example  
 ```xml
 <ns2:RetrieveDocumentSetRequest
     xmlns:ns2="urn:ihe:iti:xds-b:2007">
@@ -966,6 +1011,7 @@ Remove objects is used to remove objects from the **Document Registry**. A list 
 *Table x: ITI-62 request*
 
 
+#### Example  
 ```xml
 <lcm:RemoveObjectsRequest xmlns:lcm="urn:oasis:names:tc:ebxml-regrep:xsd:lcm:3.0">
     <rim:ObjectRefList xmlns:rim="urn:oasis:names:tc:ebxml-regrep:xsd:rim:3.0">
@@ -1003,6 +1049,7 @@ Remove objects is used to remove objects from the **Document Registry**. A list 
 *Table x: ITI-86 request*
 
 
+#### Example  
 ```xml
 <rmd:RemoveDocumentsRequest xmlns:rmd="urn:ihe:iti:rmd:2017">
     <xds:DocumentRequest xmlns:xds="urn:ihe:iti:xds-b:2007">

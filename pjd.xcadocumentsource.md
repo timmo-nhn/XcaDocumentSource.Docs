@@ -145,6 +145,7 @@ An **XML SOAP-message** (also known as **SOAP-envelope**) is defined by an enclo
             [Request]
         </AdhocQueryRequest>
     </Body>
+</Envelope>
 ```
 *Example SOAP-envelope. Namespaces are omitted for clarity*
 

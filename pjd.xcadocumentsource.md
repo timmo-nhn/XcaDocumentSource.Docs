@@ -165,6 +165,7 @@ There is excpected to be a **1:1 relationship** between the **SOAP action** (`<A
 ## Types in IHE XDS  
 There are different types used to contain and structure various pieces when storing and making documents available. It's imperative that the reader familiarizes themself with each type and where they usually reside in a **SOAP-message**.  
 The types can be abstracted to this diagram, showing how Document Sharing Objects contain metadata types, which in turn contains Coded values of Data on specific formats.
+
 ```c#
 [Document Sharing Objects]
     [Metadata Types]
@@ -239,7 +240,7 @@ TYPE
 ```
 *Hierarchical structure of HL7 datatypes*
 
-#### Example HL7 Type  
+#### Example: PID - Patient identification  
 Take this example of a **PID-type**:
 ```
 PID|||ST-1000^^^&1.3.6.1.4.1.21367.2003.3.9&ISO||Doe^John^^^||19560527|M|||100 Main St^^Metropolis^Il^44130^USA
@@ -305,6 +306,28 @@ Below is an explanation of each field in the **HL7 XCN** data type
 *Table x: Explanation of **HL7 XCN** data type*
 
 More on XCN datatype: [HL7 v2.6 - XCN - hl7-definition.caristix.com ↗](https://hl7-definition.caristix.com/v2/HL7v2.6/DataTypes/XCN)
+
+#### XON - Extended Composite Name And Identification Number For Organizations
+This data type is used to specify the name and identifier for an organization.
+
+```xml
+<Value>Laboratoriemedisinsk avdeling - FIN^^^^^&amp;2.16.578.1.12.4.1.4.102&amp;ISO^^^^4211607</Value>
+```
+
+Below is an explanation of each field in the **HL7 XCN** data type
+| Field | Type | Value |
+|---|---|---|
+| XCN.1 - Id Number | ST | `123456789` |
+| XCN.2 - Family Name| FN | `NORDMANN` |
+| XCN.3 - Given Name| ST | `OLA` |
+| XCN.4 - Second And Further Given Names Or Initials Thereof | ST | |
+| XCN.5 - Suffix | ST | |
+| XCN.6 - Prefix | ST | |
+| XCN.7 - Degree | IS | |
+| XCN.8 - Source Table | IS | |
+| XCN.9 - Assigning Authority | HD | `&amp;2.16.578.1.12.4.1.4.4&amp;ISO` |
+
+*Table x: Explanation of **HL7 XCN** data type*
 
 
 See [4.2.3.1.7 Metadata Attribute Data types - profiles.ihe.net ↗](https://profiles.ihe.net/ITI/TF/Volume3/ch-4.2.html#4.2.3.1.7) for more information.

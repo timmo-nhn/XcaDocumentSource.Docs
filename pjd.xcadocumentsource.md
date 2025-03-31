@@ -309,6 +309,7 @@ More on XCN datatype: [HL7 v2.6 - XCN - hl7-definition.caristix.com ↗](https:/
 
 #### XON - Extended Composite Name And Identification Number For Organizations
 This data type is used to specify the name and identifier for an organization.
+>**🔶 Implementation Note x** <br> In document sharing in Norway, XON type is used to describe the `authorInstitution`. This describes **both** the **department** and the **organization** for that department, as two different `XON`-types.
 
 ```xml
 <Value>Laboratoriemedisinsk avdeling - FIN^^^^^&amp;2.16.578.1.12.4.1.4.102&amp;ISO^^^^4211607</Value>
@@ -334,9 +335,9 @@ See [4.2.3.1.7 Metadata Attribute Data types - profiles.ihe.net ↗](https://pro
 
 
 ### Data types in Document Sharing Metadata
-The IHE XDS architecture is based on OASIS ebXML RegRep Version 4.0, which shares alot of the types and workflows, namely the Registry Information Model (RIM).  
-More on RIM in IHE [IHE ITI TF Vol3 - profiles.ihe.net ↗](https://profiles.ihe.net/ITI/TF/Volume3/ch-4.2.html)
-More on ebXML RegRep [OASIS ebXML RegRep Version 4.0 - docs.oasis-open.org ↗](https://docs.oasis-open.org/regrep/regrep-core/v4.0/regrep-core-rim-v4.0.html)
+The IHE XDS architecture is based on OASIS ebXML RegRep Version 3.0, which shares alot of the types and workflows, namely the Registry Information Model (RIM).    
+More on RIM in IHE [IHE ITI TF Vol3 - profiles.ihe.net ↗](https://profiles.ihe.net/ITI/TF/Volume3/ch-4.2.html)  
+More on ebXML RegRep [OASIS ebXML RegRep Version 3.0 - docs.oasis-open.org ↗](https://docs.oasis-open.org/regrep/v3.0/specs/regrep-rim-3.0-os.pdf)
 
 #### ExtrinsicObjectType (`<ExtrinsicObject>`)  
 `<ExtrinsicObject>` (or `DocumentEntry`) describes **metadata** for a given document such as who created the document and what type of document it is, aswell as the identifier used to retrieve the document. This metadata is usually what is displayed in an PHR-system or similar.
@@ -376,10 +377,10 @@ More on ebXML RegRep [OASIS ebXML RegRep Version 4.0 - docs.oasis-open.org ↗](
         [SlotType]              [0..*]
     [ExternalIdentifierType]    [0..*]
         [Name]                  [0..1]
-            [LocalizedString]   [0..1]
+            [LocalizedString]   [0..*]
     [SlotType]                  [0..*]
     [Name]                      [0..1]
-        [LocalizedString]       [0..1]
+        [LocalizedString]       [0..*]
 ```
 *Cardinality of RegistryPackage*
 
@@ -547,7 +548,7 @@ Externalidentifiers are identifiers which exist outside the boundaries of the su
 |---|---|
 | **Name** | ExternalIdentifier |
 | **Can be found** | ExtrinsicObject, RegistryPackage, AdhocQuery Response |
-| **Usage** | Group a set of information entries (eg. multiple `<Slot>`s relating to a document author)  |
+| **Usage** | Reference an identifier which is separate from the Document Registry/Repository or XDS/XCA solution  |
 | **Class Name** | ClassificationType |
 
 *Table x: Description of ExternalIdentifier*
@@ -569,16 +570,16 @@ Externalidentifiers are identifiers which exist outside the boundaries of the su
 *Example of ExternalIdentifier for patient Id*
 
 ```c#
-[ClassificationType]
+[ExternalIdentifier]
     [Name]                  [0..1]
         [LocalizedString]   [1..1]
 ```
-*Cardinality of Classification*
+*Cardinality of ExternalIdentifier*
 
 
 
 #### SlotType  (`<Slot>`)  
-`<Slot>` is a generic container subtype for information. It's usually nesten in other types, such as `<Classification>`, `<ExternalIdentifier>` or directly in types such as `<ExtrinsicObject>` and `<RegistryPackage>`. 
+`<Slot>` is a generic container subtype for information. It's usually nesten in other types, such as `<Classification>`s or directly in types such as `<ExtrinsicObject>` and `<RegistryPackage>`. 
 
 | Property  | Description |
 |---|---|

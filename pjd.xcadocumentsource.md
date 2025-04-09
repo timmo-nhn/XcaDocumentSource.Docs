@@ -169,9 +169,9 @@ The types can be abstracted to this diagram, showing how Document Sharing Object
 ```c#
 [Document Sharing Objects]
     [Metadata Types]
-        [Coded Values]
-        [Data]
-        [HL7 Data Types]
+        [Coded Values]      :: String
+        [Data]              :: String
+        [HL7 Data Types]    :: String
 ```
 *Generalized structure of data types in document sharing*
 
